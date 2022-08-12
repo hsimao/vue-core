@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- <script src="../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+    <script src="../../dist//reactivity.global.js"></script>
+    <div id="app"></div>
+
+    <script>
+      const { effect, reactive } = VueReactivity
+      const data = {
+        name: 'mars',
+        age: 35
+      }
+      // reactive 將數據變成 Proxy
+      const state1 = reactive(data)
+      const state2 = reactive(data)
+      // 已經代理過的 data, 再次代理, 返回緩存 proxy
+      console.log(state1 === state2) // true
+
+      const state3 = reactive(state1)
+      // 已經代理過的 proxy, 再次代理, 返回相同 proxy
+      console.log(state1 === state3) // true
+
+      console.log('state1', state1.name)
+      console.log('state2', state2.age)
+    </script>
+  </body>
+</html>
