@@ -1,5 +1,15 @@
 export let activeEffect = null
 
+// 解除 effect, 重新依賴收集
+function cleanupEffect(effect) {
+  const { deps } = effect
+  // 這邊不能直接設置為空陣列 deps = [], 因為 Set 內的 effect 跟屬性有雙向引用關聯在
+  for (let i = 0; i < deps.length; i++) {
+    deps[i].delete(effect)
+  }
+  effect.deps.length = 0
+}
+
 class ReactiveEffect {
   // ts 透過 public 參數會自動掛在 this 內 this.active
   public active = true
@@ -18,6 +28,9 @@ class ReactiveEffect {
 
       // 嵌套 effect 用
       this.parent = activeEffect
+
+      // 在執行前需要先將之前依賴的 effect 清空, activeEffect.deps = [(Set), (Set)]
+      cleanupEffect(this)
 
       return this.fn()
     } finally {
@@ -73,11 +86,13 @@ export function trigger(target, type, key, newValue, oldValue) {
 
   if (!depsMap) return
 
-  const effects = depsMap.get(key)
+  let effects = depsMap.get(key)
+  if (!effects) return
 
-  effects &&
-    effects.forEach(effect => {
-      /*
+  // 執行之前, 先複製一份來執行, 不要關聯引用
+  effects = new Set(effects)
+  effects.forEach(effect => {
+    /*
       1.) effect 內直接修改屬性時, 觸發 set 導致無限循環
       2.) 同一個 effect, 依賴了多個響應屬性, 導致依賴多個相同 effect, 如下場景
         const user = reactive({ firstName: 'Mars', lastName: 'CHEN' })
@@ -85,7 +100,7 @@ export function trigger(target, type, key, newValue, oldValue) {
           const fullname = user.firstName + ' ' + user.lastName
         })
       */
-      if (effect === activeEffect) return
-      effect.run()
-    })
+    if (effect === activeEffect) return
+    effect.run()
+  })
 }
