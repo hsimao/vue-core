@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script src="../../dist//reactivity.global.js"></script>
+    <div id="app"></div>
+
+    <script>
+      const { effect, reactive } = VueReactivity
+      const state = reactive({
+        flag: true,
+        name: 'jack',
+        age: 30
+      })
+
+      const runner = effect(() => {
+        console.log('render')
+        document.body.innerHTML = state.age
+      })
+
+      runner.effect.stop()
+      setTimeout(() => {
+        state.age = 100
+        console.log('change age to 100')
+
+        setTimeout(() => {
+          console.log('runner')
+          runner()
+        }, 2000)
+      }, 1000)
+    </script>
+  </body>
+</html>

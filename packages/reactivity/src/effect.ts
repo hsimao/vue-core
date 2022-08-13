@@ -2,6 +2,7 @@ export let activeEffect = null
 
 // 解除 effect, 重新依賴收集
 function cleanupEffect(effect) {
+  console.log('cleanupEffect', effect)
   const { deps } = effect
   // 這邊不能直接設置為空陣列 deps = [], 因為 Set 內的 effect 跟屬性有雙向引用關聯在
   for (let i = 0; i < deps.length; i++) {
@@ -28,13 +29,20 @@ class ReactiveEffect {
 
       // 嵌套 effect 用
       this.parent = activeEffect
-
+      console.log('this', this)
       // 在執行前需要先將之前依賴的 effect 清空, activeEffect.deps = [(Set), (Set)]
       cleanupEffect(this)
 
       return this.fn()
     } finally {
       activeEffect = null
+    }
+  }
+
+  stop() {
+    if (this.active) {
+      this.active = false
+      cleanupEffect(this)
     }
   }
 }
@@ -46,6 +54,16 @@ export function effect(fn) {
   // 建立響應式 effect
   const _effect = new ReactiveEffect(fn)
   _effect.run()
+
+  // 將 run 方法返回, _effect 儲存到 runner 方法內, 提供後續手動調用, 用法如下
+  /*
+    const runner = effect(() => {...})
+    runner.stop() 停止 effect
+    runner() 執行 effect
+  */
+  const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
+  return runner
 }
 
 // 多對多：effect 跟響應數據是多對多的關聯, 一個 effect 對應多個屬性, 一個屬性對應多個 effect
