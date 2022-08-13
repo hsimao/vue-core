@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script src="../../dist//reactivity.global.js"></script>
+    <div id="app"></div>
+
+    <script>
+      const { effect, reactive } = VueReactivity
+      const state = reactive({
+        flag: true,
+        name: 'jack',
+        age: 30
+      })
+
+      let waiting = false
+      const runner = effect(
+        () => {
+          console.log('render')
+          document.body.innerHTML = state.age
+        },
+        {
+          scheduler() {
+            console.log('scheduler')
+            // 1 秒後才執行 effect, 只會 render 一次, 類似節流效果
+            if (!waiting) {
+              waiting = true
+              setTimeout(() => {
+                runner() // 或者調用 this.run()
+                waiting = false
+              }, 1000)
+            }
+          }
+        }
+      )
+
+      state.age = 1000
+      state.age = 2000
+      state.age = 3000
+      state.age = 4000
+      state.age = 5000
+
+      setTimeout(() => {
+        state.age = 1000
+        state.age = 2000
+        state.age = 3000
+        state.age = 4000
+        state.age = 9000
+      }, 3000)
+    </script>
+  </body>
+</html>

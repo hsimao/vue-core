@@ -2,7 +2,6 @@ export let activeEffect = null
 
 // 解除 effect, 重新依賴收集
 function cleanupEffect(effect) {
-  console.log('cleanupEffect', effect)
   const { deps } = effect
   // 這邊不能直接設置為空陣列 deps = [], 因為 Set 內的 effect 跟屬性有雙向引用關聯在
   for (let i = 0; i < deps.length; i++) {
@@ -17,7 +16,7 @@ class ReactiveEffect {
   public deps = [] // effect 須記錄當前的依賴數據屬性
   public parent = null
 
-  constructor(public fn) {}
+  constructor(public fn, public scheduler) {}
 
   run() {
     // 若非激活狀態, 只需要執行函示, 不需進行依賴收集
@@ -29,7 +28,7 @@ class ReactiveEffect {
 
       // 嵌套 effect 用
       this.parent = activeEffect
-      console.log('this', this)
+
       // 在執行前需要先將之前依賴的 effect 清空, activeEffect.deps = [(Set), (Set)]
       cleanupEffect(this)
 
@@ -47,12 +46,12 @@ class ReactiveEffect {
   }
 }
 
-export function effect(fn) {
+export function effect(fn, options: any = {}) {
   // fn 可以根據狀態變化, 重新執行
   // 支持嵌套 effect(() => effect())
 
   // 建立響應式 effect
-  const _effect = new ReactiveEffect(fn)
+  const _effect = new ReactiveEffect(fn, options.scheduler)
   _effect.run()
 
   // 將 run 方法返回, _effect 儲存到 runner 方法內, 提供後續手動調用, 用法如下
@@ -119,6 +118,10 @@ export function trigger(target, type, key, newValue, oldValue) {
         })
       */
     if (effect === activeEffect) return
+
+    // 自訂義的 scheduler fallback
+    if (effect.scheduler) return effect.scheduler()
+
     effect.run()
   })
 }
