@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- <script src="../../../../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+    <script src="../../dist//reactivity.global.js"></script>
+    <div id="app"></div>
+
+    <script>
+      const { effect, reactive, computed } = VueReactivity
+
+      const state = reactive({
+        firstName: 'CHEN',
+        lastName: 'Mars'
+      })
+
+      // 計算屬性中有一個緩存標示, 如果依賴有變化, 才需重新執行 get, 若沒有變化不重新執行 get
+      const fullName = computed(() => {
+        return `${state.firstName} - ${state.lastName}`
+      })
+
+      // fullName.value // 依賴屬性沒有變化, 不會重新跑進 get 方法
+      // state.lastName = '123' // 依賴屬性變化
+      // fullName.value // 由於依賴屬性有變更, 再次取值時才會觸發重新執行 get 方法
+
+      effect(() => {
+        console.log('renfer effect')
+        app.innerHTML = fullName.value
+      })
+
+      setTimeout(() => {
+        state.firstName = '123'
+      }, 3000)
+      setTimeout(() => {
+        state.lastName = 'xxx'
+      }, 4000)
+
+      setTimeout(() => {
+        console.log('相同')
+        state.lastName = 'xxx'
+      }, 5000)
+
+      setTimeout(() => {
+        state.lastName = 'yoyo'
+        console.log('訪問 fullName', fullName.value)
+      }, 6000)
+    </script>
+  </body>
+</html>

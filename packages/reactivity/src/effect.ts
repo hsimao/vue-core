@@ -10,7 +10,7 @@ function cleanupEffect(effect) {
   effect.deps.length = 0
 }
 
-class ReactiveEffect {
+export class ReactiveEffect {
   // ts 透過 public 參數會自動掛在 this 內 this.active
   public active = true
   public deps = [] // effect 須記錄當前的依賴數據屬性
@@ -87,6 +87,12 @@ export function track(target, type, key) {
     depsMap.set(key, (dep = new Set()))
   }
 
+  trackEffects(dep)
+}
+
+export function trackEffects(dep) {
+  if (!activeEffect) return
+
   // 不重複儲存 effect, 避免相同 effect 內調用多次相同屬性, 導致重複執行問題
   const shouldTrack = !dep.has(activeEffect)
   if (shouldTrack) {
@@ -106,17 +112,22 @@ export function trigger(target, type, key, newValue, oldValue) {
   let effects = depsMap.get(key)
   if (!effects) return
 
+  // 執行 effect
+  triggerEffects(effects)
+}
+
+export function triggerEffects(effects) {
   // 執行之前, 先複製一份來執行, 不要關聯引用
   effects = new Set(effects)
   effects.forEach(effect => {
     /*
-      1.) effect 內直接修改屬性時, 觸發 set 導致無限循環
-      2.) 同一個 effect, 依賴了多個響應屬性, 導致依賴多個相同 effect, 如下場景
-        const user = reactive({ firstName: 'Mars', lastName: 'CHEN' })
-        effect(() => {
-          const fullname = user.firstName + ' ' + user.lastName
-        })
-      */
+        1.) effect 內直接修改屬性時, 觸發 set 導致無限循環
+        2.) 同一個 effect, 依賴了多個響應屬性, 導致依賴多個相同 effect, 如下場景
+          const user = reactive({ firstName: 'Mars', lastName: 'CHEN' })
+          effect(() => {
+            const fullname = user.firstName + ' ' + user.lastName
+          })
+        */
     if (effect === activeEffect) return
 
     // 自訂義的 scheduler fallback
