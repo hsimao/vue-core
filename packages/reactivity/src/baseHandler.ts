@@ -1,3 +1,5 @@
+import { isObject } from '@vue/shared'
+import { reactive } from './reactive'
 import { track, trigger } from './effect'
 
 export const enum REACTIVE_FLAGS {
@@ -13,7 +15,12 @@ export const mutableHandlers = {
     track(target, 'get', key)
 
     // 透過 Reflect 將 this 指向 proxy, 後續建立類似 computed 的 get, 方法內依賴的值若更新了才會進到 get
-    return Reflect.get(target, key, receiver)
+    const res = Reflect.get(target, key, receiver)
+
+    // 嵌套響應, 只有在取值時才進行代理, 性能較好 (Vue2 則是一開始就遞歸代理, 性能較差)
+    if (isObject(res)) return reactive(res)
+
+    return res
   },
   set(target, key, value, receiver) {
     // 若當前修改的值, 不存在原本依賴時當的響應數據, 直接返回
