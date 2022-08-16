@@ -7,21 +7,40 @@
     <title>Document</title>
   </head>
   <body>
+    <!-- <script src="../../../../node_modules/vue/dist/vue.global.js"></script> -->
     <script src="../../dist//reactivity.global.js"></script>
     <div id="app"></div>
 
     <script>
-      const { ref, effect } = VueReactivity
+      // const { effect, toRefs, reactive } = Vue
+      const { effect, reactive, ref, toRefs, toRef, proxyRefs } = VueReactivity
+      const school = reactive({
+        name: 'Mars',
+        age: 30
+      })
 
-      const flag = ref(false)
-      console.log(flag)
+      const { name, age } = toRefs(school)
+
+      // effect(() => {
+      //   app.innerHTML = `${name.value}, ${age.value}`
+      // })
+
+      // setTimeout(() => {
+      //   school.name = 'hihi'
+      // }, 3000)
+
+      const refName = ref('Mars')
+      const refAge = ref(50)
+
+      const refObjSchool = proxyRefs({ name: refName, age: refAge })
+      console.log('refObjSchool', refObjSchool.name)
 
       effect(() => {
-        app.innerHTML = flag.value ? 'Yes' : 'No'
+        app.innerHTML = `${refObjSchool.name}, ${refObjSchool.age}`
       })
 
       setTimeout(() => {
-        flag.value = true
+        refObjSchool.name = 'hihi'
       }, 3000)
     </script>
   </body>
