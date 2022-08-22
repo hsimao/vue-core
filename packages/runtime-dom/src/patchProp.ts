@@ -13,7 +13,7 @@ export function patchProp(el, key, prevValue, nextValue) {
     patchStyle(el, prevValue, nextValue)
     // 匹配 on 開頭, 且後面接續不包含小寫的 a-z 字母才吻合 => onClick or onScroll
   } else if (/^on[^a-z]/.test(key)) {
-    patchEvent()
+    patchEvent(el, key, nextValue)
   } else {
     patchAttr()
   }
